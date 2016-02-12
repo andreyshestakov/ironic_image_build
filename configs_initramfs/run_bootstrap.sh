@@ -3,7 +3,7 @@
 SQUASHFS_FILENAME=$(for OPTION in `cat /proc/cmdline`; do echo $OPTION; done | grep ^squashfs_filename= | cut -d"=" -f2-)
 
 # Unarchive bootstrap image
-mkdir /bootstrap
+mkdir /bootstrap || exit 1
 pixz -d < /tmp/bootstrap/${SQUASHFS_FILENAME} | tar -C /bootstrap -xf -
 
 # Mount needed for chroot file systems

@@ -165,6 +165,7 @@ generate_initramfs ()
                         cp -f ${root}/${BINARY_LIB} ${tmp_initrd_dir}/lib/ 2>/dev/null || echo "no lib"
                 done
         done
+        cp -r $root/etc/ssl ${tmp_initrd_dir}/etc/
         rsync -rlptDK "${datadir}_initramfs/" "${tmp_initrd_dir}/"
         find . | cpio -H newc -o | pixz > ${DESTDIR}/initrams.img.xz
 }

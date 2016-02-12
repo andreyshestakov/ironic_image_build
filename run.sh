@@ -38,7 +38,7 @@ BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS udhcpc"
 # Hardware tools:
 #BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS usbutils pciutils"
 # What you need
-BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS openssh-client openssh-server python2.7-minimal aria2"
+BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS openssh-client openssh-server python2.7-minimal aria2 ca-certificates"
 # BIOS
 BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS biosdevname dmidecode"
 # For i40e and dkms

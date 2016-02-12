@@ -1,10 +1,10 @@
 #!/bin/sh -xe
 
-BOOTSTRAP_FILENAME=$(for OPTION in `cat /proc/cmdline`; do echo $OPTION; done | grep ^bootstrap_filename= | cut -d"=" -f2)
+SQUASHFS_FILENAME=$(for OPTION in `cat /proc/cmdline`; do echo $OPTION; done | grep ^squashfs_filename= | cut -d"=" -f2-)
 
 # Unarchive bootstrap image
 mkdir /bootstrap
-pixz -d < /tmp/bootstrap/${BOOTSTRAP_FILENAME} | tar -C /bootstrap -xf -
+pixz -d < /tmp/bootstrap/${SQUASHFS_FILENAME} | tar -C /bootstrap -xf -
 
 # Mount needed for chroot file systems
 mount -t sysfs /sys /bootstrap/sys

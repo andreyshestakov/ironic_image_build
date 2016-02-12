@@ -1,23 +1,13 @@
 #!/bin/sh -xe
 
-# Open second ssh console
-sh < /dev/tty2 > /dev/tty2 2>/dev/null &
-
 # Get parameters from kernel options
-BOOTSTRAP_LINK=$(for OPTION in `cat /proc/cmdline`; do echo $OPTION; done | grep ^bootstrap_link= | cut -d"=" -f2)
-BOOTSTRAP_FILENAME=$(for OPTION in `cat /proc/cmdline`; do echo $OPTION; done | grep ^bootstrap_filename= | cut -d"=" -f2)
-
-# Configure networking
-ip link set lo up
-for IF in $(ls -1 /sys/class/net | grep -v lo)
-    do
-        udhcpc -i ${IF} -n -t3 -T1 || echo "Can not get address on " ${IF}
-    done
+SQUASHFS_LINK=$(for OPTION in `cat /proc/cmdline`; do echo $OPTION; done | grep ^fetch= | cut -d"=" -f2-)
+SQUASHFS_FILENAME=$(for OPTION in `cat /proc/cmdline`; do echo $OPTION; done | grep ^squashfs_filename= | cut -d"=" -f2-)
 
 # Download ubuntu image via torrent
 mkdir -p /tmp/bootstrap
 /bin/aria2c --log=/aria2c.log \
-            --on-download-complete=/run_bootstrap.sh \
+            --on-bt-download-complete=/run_bootstrap.sh \
             --check-certificate=false \
             --check-integrity=true \
             --bt-enable-lpd=true \
@@ -28,8 +18,6 @@ mkdir -p /tmp/bootstrap
             --enable-dht6=false \
             --follow-torrent=mem \
             --dir=/tmp/bootstrap \
-            --out=${BOOTSTRAP_FILENAME} \
-            ${BOOTSTRAP_LINK}
-
-# Wait infinity
-tail -f /dev/null
+            --out=${SQUASHFS_FILENAME} \
+            ${SQUASHFS_LINK} &&
+/run_bootstrap.sh

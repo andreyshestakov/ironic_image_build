@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
 MYSELF="${0##*/}"
-#SAVE_TEMPS=yes
+SAVE_TEMPS=yes
 #BOOTSTRAP_INCLUDE="apt-transport-https"
 bindir=$(pwd)
 datadir="${bindir}/configs"
@@ -16,17 +16,17 @@ IMAGE_NAME=${IMAGE_NAME:-bootstrap}
 [ -z "$SSHKEY" ] && SSHKEY=${DESTDIR}/id_rsa.pub
 
 # Binaries to copy to initramfs image
-BINARIES_FOR_INITRAMFS="/usr/bin/aria2c /usr/bin/pixz"
+BINARIES_FOR_INITRAMFS="/usr/bin/aria2c /usr/bin/pixz /bin/tar"
 
 # Kernel, firmware:
-BOOTSTRAP_PKGS="ubuntu-minimal linux-image${KERNEL_FLAVOR} linux-firmware linux-firmware-nonfree"
+BOOTSTRAP_PKGS="linux-image${KERNEL_FLAVOR} linux-firmware linux-firmware-nonfree"
 # Compressors:
 BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS xz-utils pixz"
 # Smaller tools providing the standard ones.
 # Disk managment tools
-BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS lvm2 parted"
+BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS parted"
 # Networking tools
-BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS udhcpc"
+#BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS udhcpc"
 # Debug packages:
 #BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS strace gdb lsof"
 # Performance tunning:
@@ -38,7 +38,7 @@ BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS udhcpc"
 # Hardware tools:
 #BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS usbutils pciutils"
 # What you need
-BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS openssh-client openssh-server python2.7-minimal aria2 ca-certificates"
+BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS openssh-client openssh-server python2.7-minimal aria2 ca-certificates qemu-utils"
 # BIOS
 BOOTSTRAP_PKGS="$BOOTSTRAP_PKGS biosdevname dmidecode"
 # For i40e and dkms
@@ -138,6 +138,13 @@ cleanup_chroot ()
 {
         local root="$1"
         [ -z "$root" ] && exit 1
+#        chroot "$root" env \
+#                LC_ALL=C \
+#                DEBIAN_FRONTEND=noninteractive \
+#                DEBCONF_NONINTERACTIVE_SEEN=true \
+#                TMPDIR=/tmp \
+#                TMP=/tmp \
+#                "dpkg --get-selections 'linux-*' | awk '{print \$1}' | xargs apt-get purge -y"
         signal_chrooted_processes "$root" SIGTERM
         signal_chrooted_processes "$root" SIGKILL
         umount "${root}/tmp/local-apt" 2>/dev/null || umount -l "${root}/tmp/local-apt" ||
@@ -151,8 +158,7 @@ cleanup_chroot ()
 generate_initramfs ()
 {
         local root="$1"
-        initrd=${root}/tmp/initrd.gz
-        wget -O ${initrd} ${MIRROR_DISTRO}/dists/${DISTRO_RELEASE}/main/installer-${ARCH}/current/images/netboot/ubuntu-installer/${ARCH}/initrd.gz
+        initrd=$(ls -1 ${root}/boot/initrd.img* | tail -n1)
         tmp_initrd_dir=$root/tmp/initramfs
         mkdir -p ${tmp_initrd_dir}
         cd ${tmp_initrd_dir}
@@ -167,14 +173,13 @@ generate_initramfs ()
         done
         cp -r $root/etc/ssl ${tmp_initrd_dir}/etc/
         rsync -rlptDK "${datadir}_initramfs/" "${tmp_initrd_dir}/"
-        find . | cpio -H newc -o | pixz > ${DESTDIR}/initrams.img.xz
+        find . | cpio -H newc -o | pixz > ${DESTDIR}/initramfs.img.xz
 }
 
 copy_vmlinuz ()
 {
         local root="$1"
-        linux=${DESTDIR}/linux
-        wget -O ${linux} ${MIRROR_DISTRO}/dists/${DISTRO_RELEASE}/main/installer-${ARCH}/current/images/netboot/ubuntu-installer/${ARCH}/linux
+        cp $(ls -1 ${root}/boot/vmlinuz* | tail -n1) ${DESTDIR}/linux
 }
 
 mk_targz_image ()

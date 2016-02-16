@@ -13,7 +13,7 @@ mount -o bind /dev /bootstrap/dev
 mount -t devpts none /bootstrap/dev/pts
 
 # DNS
-rm -f /bootstrap/etc/resolv.conf
+#rm -f /bootstrap/etc/resolv.conf
 cp /etc/resolv.conf /bootstrap/etc/resolv.conf
 hostname -F /bootstrap/etc/hostname
 

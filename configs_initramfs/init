@@ -1,23 +1,43 @@
-#!/bin/sh -x
+#!/bin/sh
 
-export PATH
-mount /run
-mkdir -p /run/lock
-mount /proc
-mount /sys
+[ -d /dev ] || mkdir -m 0755 /dev
+[ -d /root ] || mkdir -m 0700 /root
+[ -d /sys ] || mkdir /sys
+[ -d /proc ] || mkdir /proc
+[ -d /tmp ] || mkdir /tmp
+mkdir -p /var/lock
+mount -t sysfs -o nodev,noexec,nosuid sysfs /sys
+mount -t proc -o nodev,noexec,nosuid proc /proc
+# Some things don't work properly without /etc/mtab.
+ln -sf /proc/mounts /etc/mtab
 
-# Find devices
-/lib/debian-installer/start-udev
+grep -q '\<quiet\>' /proc/cmdline || echo "Loading, please wait..."
+
+# Note that this only becomes /dev on the real filesystem if udev's scripts
+# are used; which they will be, but it's worth pointing out
+if ! mount -t devtmpfs -o mode=0755 udev /dev; then
+        echo "W: devtmpfs not available, falling back to tmpfs for /dev"
+        mount -t tmpfs -o mode=0755 udev /dev
+        [ -e /dev/console ] || mknod -m 0600 /dev/console c 5 1
+        [ -e /dev/null ] || mknod /dev/null c 1 3
+fi
+mkdir /dev/pts
+mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
+mount -t tmpfs -o "noexec,nosuid,size=10%,mode=0755" tmpfs /run
 
 # Open second ssh console
 sh < /dev/tty2 > /dev/tty2 2>/dev/null &
 
-# Configure networking
-ip link set lo up
-for IF in $(ls -1 /sys/class/net | grep -v lo)
-    do
-        udhcpc -i ${IF} -n -t3 -T1 || echo "Can not get address on " ${IF}
-    done
+. /scripts/functions
+
+run_scripts /scripts/init-top
+
+maybe_break modules
+load_modules
+
+modprobe e1000
+sleep 10
+configure_networking
 
 # Download image
 /download_bootstrap.sh

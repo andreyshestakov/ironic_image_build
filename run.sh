@@ -138,13 +138,19 @@ cleanup_chroot ()
 {
         local root="$1"
         [ -z "$root" ] && exit 1
-#        chroot "$root" env \
-#                LC_ALL=C \
-#                DEBIAN_FRONTEND=noninteractive \
-#                DEBCONF_NONINTERACTIVE_SEEN=true \
-#                TMPDIR=/tmp \
-#                TMP=/tmp \
-#                "dpkg --get-selections 'linux-*' | awk '{print \$1}' | xargs apt-get purge -y"
+        chroot "$root" env \
+                LC_ALL=C \
+                DEBIAN_FRONTEND=noninteractive \
+                DEBCONF_NONINTERACTIVE_SEEN=true \
+                TMPDIR=/tmp \
+                TMP=/tmp \
+                dpkg --get-selections 'linux-*' | awk '{print $1}' | chroot "$root" env \
+                    LC_ALL=C \
+                    DEBIAN_FRONTEND=noninteractive \
+                    DEBCONF_NONINTERACTIVE_SEEN=true \
+                    TMPDIR=/tmp \
+                    TMP=/tmp \
+                    xargs apt-get purge -y
         signal_chrooted_processes "$root" SIGTERM
         signal_chrooted_processes "$root" SIGKILL
         umount "${root}/tmp/local-apt" 2>/dev/null || umount -l "${root}/tmp/local-apt" ||

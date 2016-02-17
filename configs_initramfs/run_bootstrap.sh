@@ -14,8 +14,11 @@ mount -t devpts none /bootstrap/dev/pts
 
 # DNS
 #rm -f /bootstrap/etc/resolv.conf
-cp /etc/resolv.conf /bootstrap/etc/resolv.conf
+#cp /etc/resolv.conf /bootstrap/etc/resolv.conf
 hostname -F /bootstrap/etc/hostname
+
+# Some things don't work properly without /etc/mtab.
+cp /etc/mtab /bootstrap/etc/mtab
 
 # Start SSH
 chroot /bootstrap service ssh start

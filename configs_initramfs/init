@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Use all memory
+mount -o remount,size=100% -t rootfs rootfs /
+
 [ -d /dev ] || mkdir -m 0755 /dev
 [ -d /root ] || mkdir -m 0700 /root
 [ -d /sys ] || mkdir /sys
@@ -23,7 +26,7 @@ if ! mount -t devtmpfs -o mode=0755 udev /dev; then
 fi
 mkdir /dev/pts
 mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
-mount -t tmpfs -o "noexec,nosuid,size=10%,mode=0755" tmpfs /run
+#mount -t tmpfs -o "noexec,nosuid,size=10%,mode=0755" tmpfs /run
 
 # Open second ssh console
 sh < /dev/tty2 > /dev/tty2 2>/dev/null &
